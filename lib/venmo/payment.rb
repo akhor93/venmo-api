@@ -12,7 +12,7 @@ module VenmoAPI
     end
 
     def send (access_token)
-      uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'payments')
+      uri = URI('https://sandbox-api.venmo.com/v1/' + 'payments')
       res = Net::HTTP.post_form(uri, 'access_token' => access_token,
                                      'phone' => self.phone,
                                      'email' => self.email,
@@ -20,7 +20,12 @@ module VenmoAPI
                                      'note' => self.note,
                                      'amount' => self.amount,
                                      'audience' => self.audience)
-      return VenmoAPI::Helper::recursive_symbolize_keys! JSON.parse(res)
+      res_data = JSON.parse(res.body)
+      puts res_data.inspect
+      if res_data["data"]
+        self.data = VenmoAPI::Helper::recursive_symbolize_keys! res_data["data"]
+      end
+      return self
     end
 
     def self.get_payment
@@ -30,11 +35,11 @@ module VenmoAPI
     private
 
     def validate_properties
-      if options[:user_id] || options[:phone] || options[:email]
+      if !(self.user_id || self.phone || self.email)
         raise "make_payment requires a target. Please provide a user_id, phone, or email in options hash"
-      elsif !options[:note]
+      elsif !self.note
         raise "make_payment requires a note in options hash"
-      elsif !options[:amount]
+      elsif !self.amount
         raise "make_payment requires an amount in options hash"
       end
     end
