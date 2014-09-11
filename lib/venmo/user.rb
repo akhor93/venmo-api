@@ -1,17 +1,17 @@
 require 'net/http'
 require 'venmo/helper'
+require 'venmo/payment'
 
 module VenmoAPI
   class User
-    attr_accessor :access_token, :expires_in, :refresh_token, :token_updated, :response_type, :data
+    attr_accessor :access_token, :expires_in, :refresh_token, :token_updated, :response_type, :token_type, :data
     def initialize(obj, response_type)
-      puts obj.inspect
       self.access_token = obj[:access_token]
       self.response_type = response_type
       if response_type == 'code'
         self.expires_in = obj[:expires_in]
         self.refresh_token = obj[:refresh_token]
-        # self.token_type = obj[:bearer]
+        self.token_type = obj[:bearer]
         self.token_updated = Time.now
         self.data = obj[:user]
       end
@@ -22,7 +22,10 @@ module VenmoAPI
     def update_info
       uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'me?access_token=' + self.access_token)
       res = Net::HTTP.get(uri)
-      self.data = VenmoAPI::Helper::recursive_symbolize_keys! JSON.parse(res)["data"]
+      res_data = JSON.parse(res)
+      if res_data["data"]
+        self.data = VenmoAPI::Helper::recursive_symbolize_keys! res_data["data"]
+      end
     end
 
     def get_info(update = true)
@@ -32,10 +35,16 @@ module VenmoAPI
       return self.data
     end
 
+    #similar
     def get_user(id)
-      uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'users/' + id + '?access_token=' + self.access_token)
+      uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'users/' + id.to_s + '?access_token=' + self.access_token)
       res = Net::HTTP.get(uri)
-      return JSON.parse(res)["data"]
+      return JSON.parse(res)
+    end
+    def self.get_user(id, access_token)
+      uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'users/' + id.to_s + '?access_token=' + access_token)
+      res = Net::HTTP.get(uri)
+      return JSON.parse(res)
     end
 
     def get_friends (options = {})
@@ -53,6 +62,11 @@ module VenmoAPI
       url += options[:limit] ? "&limit=" + options[:limit] : ''
       res = Net::HTTP.get(URI(url))
       return JSON.parse(res)
+    end
+
+    def make_payment (options = {})
+      payment = Payment.new(options)
+      return payment.send self.access_token
     end
 
     private
