@@ -13,19 +13,16 @@ module VenmoAPI
         self.refresh_token = obj[:refresh_token]
         # self.token_type = obj[:bearer]
         self.token_updated = Time.now
+        self.data = obj[:user]
       end
-      self.data = obj
-      recursive_symbolize_keys self.data
+      VenmoAPI::Helper::recursive_symbolize_keys! self.data
       validate_properties response_type
     end
 
     def update_info
       uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'me?access_token=' + self.access_token)
       res = Net::HTTP.get(uri)
-      res_data = JSON.parse(res)["data"]
-      recursive_symbolize_keys! res_data
-      self.data = res_data
-      return self.data
+      self.data = VenmoAPI::Helper::recursive_symbolize_keys! JSON.parse(res)["data"]
     end
 
     def get_info(update = true)
@@ -38,18 +35,24 @@ module VenmoAPI
     def get_user(id)
       uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'users/' + id + '?access_token=' + self.access_token)
       res = Net::HTTP.get(uri)
-      res_data = JSON.parse(res)["data"]
-      recursive_symbolize_keys! res_data
-      return res_data
+      return JSON.parse(res)["data"]
     end
 
-    def get_friends (id = false)
-      if id
-        uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'users/' + id + '/friends?access_token=' + self.access_token)
+    def get_friends (options = {})
+      if options[:id]
+        url = VenmoAPI::Helper::VENMO_BASE_URL + 'users/' + options[:id] + '/friends?access_token=' + self.access_token
       else
-        if self.data
-        uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'users/' + id + '/friends?access_token=' + self.access_token)
+        if self.data[:user][:id]
+          url = VenmoAPI::Helper::VENMO_BASE_URL + 'users/' + self.data[:user][:id] + '/friends?access_token=' + self.access_token
+        else
+          raise "get_friends must be called with an id if there is no id present on the current user"
+        end
       end
+      url += options[:before] ? "&before=" + options[:before] : ''
+      url += options[:after] ? "&after=" + options[:after] : ''
+      url += options[:limit] ? "&limit=" + options[:limit] : ''
+      res = Net::HTTP.get(URI(url))
+      return JSON.parse(res)
     end
 
     private
@@ -64,6 +67,5 @@ module VenmoAPI
         raise "Missing token_updated"
       end
     end
-
   end
 end

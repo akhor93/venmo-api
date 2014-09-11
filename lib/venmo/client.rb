@@ -19,7 +19,7 @@ module VenmoAPI
       if self.response_type == 'code'
         uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'oauth/access_token')
         res = Net::HTTP.post_form(uri, 'client_id' => self.client_id, 'client_secret' => self.secret, 'code' => key)
-        user = User.new(JSON.parse(res.body).symbolize_key, self.response_type);
+        user = User.new(VenmoAPI::Helper::recursive_symbolize_keys!(JSON.parse(res.body)), self.response_type);
         return user;
       else
         user = User.new({:access_token => key}, self.response_type)
