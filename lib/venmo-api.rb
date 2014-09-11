@@ -1,2 +1,1 @@
-require 'client'
-require 'user'
+require 'venmo/client'
