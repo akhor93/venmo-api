@@ -21,15 +21,10 @@ module VenmoAPI
                                      'amount' => self.amount,
                                      'audience' => self.audience)
       res_data = JSON.parse(res.body)
-      puts res_data.inspect
       if res_data["data"]
         self.data = VenmoAPI::Helper::recursive_symbolize_keys! res_data["data"]
       end
       return self
-    end
-
-    def self.get_payment
-      test = "test"
     end
 
     private

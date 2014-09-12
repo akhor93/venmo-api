@@ -19,7 +19,13 @@ module VenmoAPI
       if self.response_type == 'code'
         uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'oauth/access_token')
         res = Net::HTTP.post_form(uri, 'client_id' => self.client_id, 'client_secret' => self.secret, 'code' => key)
-        user = User.new(VenmoAPI::Helper::recursive_symbolize_keys!(JSON.parse(res.body)), self.response_type);
+        res_data = JSON.parse(res.body)
+        puts res_data.inspect
+        if res_data['access_token']
+          user = User.new(VenmoAPI::Helper::recursive_symbolize_keys!(res_data), self.response_type);
+        else
+          user = nil;
+        end
         return user;
       else
         user = User.new({:access_token => key}, self.response_type)
@@ -34,6 +40,24 @@ module VenmoAPI
         :scope => scope,
         :response_type => response_type
       }
+    end
+
+    def get_user(id, access_token)
+      uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'users/' + id.to_s + '?access_token=' + access_token)
+      res = Net::HTTP.get(uri)
+      return JSON.parse(res)
+    end
+
+    def get_payment (id, access_token)
+      uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'payments/' + id.to_s + '?access_token=' + access_token)
+      res = Net::HTTP.get(uri)
+      return JSON.parse(res)
+    end
+
+    def get_recent_payments access_token
+      uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'payments?access_token=' + access_token)
+      res = Net::HTTP.get(uri)
+      return JSON.parse(res)
     end
 
     private

@@ -35,18 +35,6 @@ module VenmoAPI
       return self.data
     end
 
-    #similar
-    def get_user(id)
-      uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'users/' + id.to_s + '?access_token=' + self.access_token)
-      res = Net::HTTP.get(uri)
-      return JSON.parse(res)
-    end
-    def self.get_user(id, access_token)
-      uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'users/' + id.to_s + '?access_token=' + access_token)
-      res = Net::HTTP.get(uri)
-      return JSON.parse(res)
-    end
-
     def get_friends (options = {})
       if options[:id]
         url = VenmoAPI::Helper::VENMO_BASE_URL + 'users/' + options[:id] + '/friends?access_token=' + self.access_token
@@ -64,9 +52,27 @@ module VenmoAPI
       return JSON.parse(res)
     end
 
+    def get_user(id)
+      uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'users/' + id.to_s + '?access_token=' + self.access_token)
+      res = Net::HTTP.get(uri)
+      return JSON.parse(res)
+    end
+
     def make_payment (options = {})
       payment = Payment.new(options)
       return payment.send self.access_token
+    end
+
+    def get_payment (id)
+      uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'payments/' + id.to_s + '?access_token=' + self.access_token)
+      res = Net::HTTP.get(uri)
+      return JSON.parse(res)
+    end
+
+    def get_recent_payments
+      uri = URI(VenmoAPI::Helper::VENMO_BASE_URL + 'payments?access_token=' + self.access_token)
+      res = Net::HTTP.get(uri)
+      return JSON.parse(res)
     end
 
     private
