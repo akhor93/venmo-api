@@ -6,7 +6,7 @@ A Ruby interface to the Venmo Developer API.
   Add to your `Gemfile`:
 
   ```ruby
-  gem "install venmo-api"
+  gem "venmo-api"
   ```
 
   Then `bundle install`
